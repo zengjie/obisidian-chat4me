@@ -6,3 +6,97 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.audio-segment {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.audio-segment:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.segment-number {
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.segment-icon {
+    margin-right: 8px;
+}
+
+.segment-speaker {
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.segment-text {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.segment-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.segment-control {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-muted);
+    border-radius: 4px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.segment-control:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.segment-control:active {
+    background-color: var(--background-modifier-active);
+}
+
+.segment-status {
+    margin-left: 8px;
+}
+
+.chat4me-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.chat4me-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.segment-line-info {
+    margin-right: 5px;
+    font-size: 0.8em;
+    color: var(--text-normal);
+}
+
+.segment-line-info.short-line {
+    color: var(--text-muted);
+}
+
+.audio-segment.highlighted-segment {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}

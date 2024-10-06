@@ -1,11 +1,37 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "chat4me",
+	"name": "Chat4Me",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "Edit podcast scripts and generate audio with TTS service.",
+	"author": "Your Name",
+	"authorUrl": "https://your-website.com",
+	"isDesktopOnly": false,
+	"commands": [
+		{
+			"id": "show-chat4me-sidebar",
+			"name": "Show Chat4Me Sidebar",
+			"icon": "mic-2"
+		},
+		{
+			"id": "generate-full-audio",
+			"name": "Generate Full Audio",
+			"icon": "file-audio"
+		},
+		{
+			"id": "generate-audio-for-current-line",
+			"name": "Generate Audio For Current Line",
+			"icon": "waveform"
+		},
+		{
+			"id": "play-current-line",
+			"name": "Play Current Line",
+			"icon": "play"
+		},
+		{
+			"id": "stop-audio",
+			"name": "Stop Audio",
+			"icon": "square"
+		}
+	]
 }
