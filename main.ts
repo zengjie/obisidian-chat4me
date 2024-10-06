@@ -273,7 +273,13 @@ class Chat4MeView extends ItemView {
 
 	setCurrentFile(file: TFile) {
 		this.currentFile = file;
-		this.updateAudioSegments();
+		this.updateAudioSegments().then(() => {
+			const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (activeView && activeView.file === this.currentFile) {
+				const cursor = activeView.editor.getCursor();
+				this.highlightSegment(cursor.line);
+			}
+		});
 		this.updateViewHeader();
 	}
 
@@ -312,6 +318,13 @@ class Chat4MeView extends ItemView {
 				segmentsContainer.appendChild(segment);
 				this.audioSegments.push(segment);
 			}
+		}
+
+		// Apply highlighting after creating all segments
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (activeView && activeView.file === this.currentFile) {
+			const cursor = activeView.editor.getCursor();
+			this.highlightSegment(cursor.line);
 		}
 	}
 
