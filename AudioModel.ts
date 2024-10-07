@@ -94,32 +94,44 @@ export class AudioModel {
     async generateAudio(text: string, speaker: 'Host' | 'Guest'): Promise<string> {
         const audioId = this.getAudioId(text, speaker);
         const cachePath = this.getAudioCachePath(audioId);
-        console.log('generateAudio', audioId, cachePath);
 
         // Check if audio already exists in cache or audioStore
-        if (await this.vault.adapter.exists(cachePath) || this.audioStore.has(audioId)) {
-            this.audioStore.set(audioId, new AudioState('generated'));
+        if (await this.vault.adapter.exists(cachePath) || this.audioStore.get(audioId)?.status === 'generated') {
+            this.updateAudioStatus(audioId, 'generated');
             return audioId;
         }
 
-        this.audioStore.set(audioId, new AudioState('generating'));
+        this.updateAudioStatus(audioId, 'generating');
         
         try {
+            console.log('generate audio start', audioId, cachePath);
+            
             const voiceId = speaker === 'Host' ? this.settings.hostVoice : this.settings.guestVoice;
-            const audioBuffer = await this.ttsBackend.generateAudio(text, voiceId, this.settings.speechSpeed);
+            const buffer = await this.ttsBackend.generateAudio(text, voiceId, this.settings.speechSpeed);
+
+            console.log('generate audio end', audioId, cachePath);
             
             // Ensure the temp directory exists
             await this.vault.adapter.mkdir(this.cachePath);
             
             // Save the audio file to the temp directory
-            await this.vault.adapter.writeBinary(cachePath, audioBuffer);
-            
+            await this.vault.adapter.writeBinary(cachePath, buffer);
+
             this.audioStore.set(audioId, new AudioState('generated'));
+            
+            this.updateAudioStatus(audioId, 'generated');
             return audioId;
         } catch (error) {
             console.error('Failed to generate audio:', error);
-            this.audioStore.set(audioId, new AudioState('not_generated'));
+            this.updateAudioStatus(audioId, 'not_generated');
             throw error;
+        }
+    }
+
+    updateAudioStatus(audioId: string, status: 'generated' | 'not_generated' | 'generating') {
+        const audio = this.audioStore.get(audioId);
+        if (audio) {
+            audio.status = status;
         }
     }
 
@@ -150,10 +162,14 @@ export class AudioModel {
             audio.source = source;
 
             // Set up event listener for when playback ends
-            source.onended = () => {
-                audio.isPlaying = false;
-                audio.source = null;
-            };
+            return new Promise<void>((resolve) => {
+                source.onended = () => {
+                    audio.isPlaying = false;
+                    audio.source = null;
+                    console.log(`Finished playing audio: ${audioId}`);
+                    resolve();
+                };
+            });
 
             console.log(`Playing audio: ${audioId}`);
         }
@@ -179,7 +195,7 @@ export class AudioModel {
         }
     }
 
-    async getAudioStatus(audioId: string): Promise<'generated' | 'not_generated' | 'generating'> {
+    getAudioStatus(audioId: string): 'generated' | 'not_generated' | 'generating' {
         const audio = this.audioStore.get(audioId);
         return audio ? audio.status : 'not_generated';
     }

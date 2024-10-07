@@ -19,13 +19,13 @@ export class AudioController extends EventEmitter {
 
     private async updateAllSegmentStatuses() {
         for (const segment of this.segments) {
-            const audioId = this.model.getAudioId(segment.text, segment.speaker);
+            const audioId = segment.audioId;
             if (audioId) {
                 this.audioIdMap.set(audioId, segment.lineNumber);
-                const status = await this.model.getAudioStatus(audioId);
-                this.updateSegmentStatus(audioId, status);
+                const status = this.model.getAudioStatus(audioId);
+                segment.updateStatus(status);
             } else {
-                this.updateSegmentStatus(null, 'not_generated', segment.lineNumber);
+                segment.updateStatus('not_generated');
             }
         }
     }
@@ -46,7 +46,7 @@ export class AudioController extends EventEmitter {
         const audioId = await this.model.generateAudio(text, speaker);
         
         this.audioIdMap.set(audioId, lineNumber);
-        const status = await this.model.getAudioStatus(audioId);
+        const status = this.model.getAudioStatus(audioId);
         this.updateSegmentStatus(audioId, status);
 
         console.log('status', status);
@@ -55,11 +55,17 @@ export class AudioController extends EventEmitter {
             if (this.isPlaying && this.currentPlayingSegment === lineNumber) {
                 await this.pauseFullAudio();
             } else {
-                await this.model.playAudio(audioId);
                 this.currentPlayingSegment = lineNumber;
                 this.isPlaying = true;
                 this.emit('stateChange', this.isPlaying);
                 this.emit('segmentPlay', lineNumber);
+                await this.model.playAudio(audioId);
+                
+                // The audio has finished playing naturally
+                this.isPlaying = false;
+                this.currentPlayingSegment = -1;
+                this.emit('stateChange', this.isPlaying);
+                this.emit('segmentEnd', lineNumber);
             }
         }
     }
@@ -76,33 +82,31 @@ export class AudioController extends EventEmitter {
         }
     }
 
-    async generateSegment(lineNumber: number, text: string, speaker: 'Host' | 'Guest') {
+    async generateSegmentAudio(lineNumber: number, text: string, speaker: 'Host' | 'Guest') {
         try {
-            this.updateSegmentStatus(null, 'generating', lineNumber);
-            const audioId = await this.model.generateAudio(text, speaker);
+            const audioId = this.model.getAudioId(text, speaker);
+            this.updateSegmentStatus(audioId, 'generating');
+
+            console.log('generateSegmentAudio', audioId, text, speaker);
+            
+            await this.model.generateAudio(text, speaker);
             this.audioIdMap.set(audioId, lineNumber);
-            const status = await this.model.getAudioStatus(audioId);
+            
+            const status = this.model.getAudioStatus(audioId);
             this.updateSegmentStatus(audioId, status);
-            this.emit('segmentGenerated', lineNumber, status);
-            return audioId;
+            console.log('generateSegmentAudio', audioId, status);
         } catch (error) {
             console.error(`Error generating audio for line ${lineNumber}:`, error);
-            this.updateSegmentStatus(null, 'not_generated', lineNumber);
-            this.emit('segmentGenerated', lineNumber, 'not_generated');
+            this.updateSegmentStatus(null, 'not_generated');
             throw error;
         }
     }
 
-    private updateSegmentStatus(audioId: string | null, status: 'generated' | 'not_generated' | 'generating', lineNumber?: number) {
-        let segmentLineNumber = lineNumber;
-        if (audioId !== null) {
-            segmentLineNumber = this.audioIdMap.get(audioId);
-        }
-        if (segmentLineNumber !== undefined) {
-            const segment = this.segments.find(seg => seg.lineNumber === segmentLineNumber);
-            if (segment) {
-                segment.updateStatus(status);
-            }
+    private updateSegmentStatus(audioId: string | null, status: 'generated' | 'not_generated' | 'generating') {
+        console.log('updateSegmentStatus', audioId, status);
+        const segment = this.segments.find(seg => seg.audioId === audioId);
+        if (segment) {
+            segment.updateStatus(status);
         }
     }
 
@@ -114,13 +118,17 @@ export class AudioController extends EventEmitter {
             const audioId = this.model.getAudioId(segment.text, segment.speaker);
             const finalAudioId = audioId || await this.model.generateAudio(segment.text, segment.speaker);
             this.audioIdMap.set(finalAudioId, segment.lineNumber);
-            const status = await this.model.getAudioStatus(finalAudioId);
+            const status = this.model.getAudioStatus(finalAudioId);
             this.updateSegmentStatus(finalAudioId, status);
 
             if (status === 'generated') {
                 this.currentPlayingSegment = i;
                 this.emit('segmentPlay', segment.lineNumber);
                 await this.model.playAudio(finalAudioId);
+                
+                // The audio has finished playing naturally
+                this.updateSegmentStatus(finalAudioId, 'generated');
+                this.emit('segmentEnd', segment.lineNumber);
             }
         }
 
@@ -147,16 +155,16 @@ export class AudioController extends EventEmitter {
             if (audioId) {
                 // Audio already exists, just update the status
                 this.audioIdMap.set(audioId, segment.lineNumber);
-                const status = await this.model.getAudioStatus(audioId);
+                const status = this.model.getAudioStatus(audioId);
                 this.updateSegmentStatus(audioId, status);
                 return;
             }
 
             // Audio doesn't exist, generate it
-            return this.generateSegment(segment.lineNumber, segment.text, segment.speaker)
+            return this.generateSegmentAudio(segment.lineNumber, segment.text, segment.speaker)
                 .catch(error => {
                     console.error(`Error generating audio for line ${segment.lineNumber}:`, error);
-                    this.updateSegmentStatus(null, 'not_generated', segment.lineNumber);
+                    this.updateSegmentStatus(null, 'not_generated');
                 });
         });
 

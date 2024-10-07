@@ -169,6 +169,9 @@ export class Chat4MeView extends ItemView {
 
         this.audioController.on('stateChange', (isPlaying: boolean) => {
             this.updatePlayPauseButton(isPlaying);
+            if (!isPlaying) {
+                this.resetPlayingSegmentHighlight();
+            }
         });
 
         this.audioController.on('segmentPlay', (lineNumber: number) => {
@@ -187,10 +190,6 @@ export class Chat4MeView extends ItemView {
         this.audioController.on('fullAudioGenerationError', (error) => {
             console.error('Error generating full audio:', error);
             new Notice('Error generating full audio. Please check the console for details.');
-        });
-
-        this.audioController.on('segmentGenerated', (lineNumber: number, status: string) => {
-            this.updateSegmentStatus(lineNumber, status as 'generated' | 'not_generated' | 'generating');
         });
     }
 
@@ -272,13 +271,16 @@ export class Chat4MeView extends ItemView {
     }
 
     private createAndAddSegment(text: string, lineNumber: number, speaker: 'Host' | 'Guest', container: Element) {
+        const audioId = this.model.getAudioId(text, speaker);
+
         const segment = new SegmentBlock(
             text,
             lineNumber,
             speaker,
+            audioId,
             () => this.audioController.playPauseSegment(lineNumber, text, speaker),
             () => this.audioController.stopSegment(lineNumber),
-            () => this.audioController.generateSegment(lineNumber, text, speaker),
+            () => this.audioController.generateSegmentAudio(lineNumber, text, speaker),
             () => this.jumpToLine(lineNumber)
         );
         container.appendChild(segment.element);
