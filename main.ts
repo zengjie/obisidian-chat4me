@@ -1,7 +1,7 @@
-import { Plugin, MarkdownView, Editor, Notice } from 'obsidian';
+import { Plugin, MarkdownView, Editor, Notice, TFolder } from 'obsidian';
 import { Chat4MeSettings, DEFAULT_SETTINGS } from './settings';
 import { Chat4MeView, VIEW_TYPE_CHAT4ME } from './Chat4MeView';
-import { AudioModel, MockAudioModel } from './AudioModel';
+import { AudioModel } from './AudioModel';
 import { Chat4MeSettingTab } from './SettingsTab';
 
 export default class Chat4MePlugin extends Plugin {
@@ -11,7 +11,9 @@ export default class Chat4MePlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.model = new MockAudioModel();
+		const pluginDir = this.manifest.dir ?? '';
+		const cachePath = `${pluginDir}/cache`;
+		this.model = new AudioModel(this.app.vault, cachePath);
 
 		// Register the custom view
 		this.registerView(

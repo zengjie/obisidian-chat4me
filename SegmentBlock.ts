@@ -5,6 +5,8 @@ export class SegmentBlock {
     lineNumber: number;
     text: string;
     speaker: 'Host' | 'Guest';
+    private playPauseEl: HTMLElement;
+    private isPlaying: boolean = false;
 
     constructor(text: string, lineNumber: number, speaker: 'Host' | 'Guest', onPlay: () => void, onStop: () => void, onGenerate: () => void, onJumpToLine: () => void) {
         this.text = text;
@@ -16,6 +18,9 @@ export class SegmentBlock {
     private createSegmentElement(onPlay: () => void, onStop: () => void, onGenerate: () => void, onJumpToLine: () => void): HTMLElement {
         const segment = createEl('div', { cls: 'audio-segment' });
         segment.dataset.lineNumber = this.lineNumber.toString();
+
+        // Add status block
+        const statusBlock = segment.createEl('div', { cls: 'segment-status-block' });
 
         const iconEl = segment.createEl('span', { cls: 'segment-icon' });
         setIcon(iconEl, this.speaker === 'Host' ? 'mic' : 'message-circle');
@@ -40,21 +45,23 @@ export class SegmentBlock {
             return button;
         };
 
-        const playPauseEl = createControlButton('play-pause', 'play-circle');
+        this.playPauseEl = createControlButton('play-pause', 'play-circle');
         const stopEl = createControlButton('stop', 'stop-circle');
         const generateEl = createControlButton('generate', 'refresh-cw');
 
-        const status = segment.createEl('div', { cls: 'segment-status' });
-        setIcon(status, 'alert-circle');
-
-        playPauseEl.addEventListener('click', (e) => {
+        // Add event listeners to the buttons
+        this.playPauseEl.addEventListener('click', (e) => {
             e.stopPropagation();
+            this.togglePlayPause();
             onPlay();
         });
+
         stopEl.addEventListener('click', (e) => {
             e.stopPropagation();
+            this.stop();
             onStop();
         });
+
         generateEl.addEventListener('click', (e) => {
             e.stopPropagation();
             onGenerate();
@@ -66,10 +73,9 @@ export class SegmentBlock {
     }
 
     updateStatus(status: 'generated' | 'not_generated' | 'generating') {
-        const statusEl = this.element.querySelector('.segment-status');
-        if (statusEl instanceof HTMLElement) {
-            statusEl.className = `segment-status ${status}`;
-            setIcon(statusEl, status === 'generated' ? 'check-circle' : status === 'generating' ? 'loader' : 'alert-circle');
+        const statusBlock = this.element.querySelector('.segment-status-block');
+        if (statusBlock instanceof HTMLElement) {
+            statusBlock.className = `segment-status-block ${status}`;
         }
     }
 
@@ -82,10 +88,21 @@ export class SegmentBlock {
     }
 
     setPlaying(isPlaying: boolean) {
+        this.isPlaying = isPlaying;
         if (isPlaying) {
             this.element.addClass('playing-segment');
+            setIcon(this.playPauseEl, 'pause-circle');
         } else {
             this.element.removeClass('playing-segment');
+            setIcon(this.playPauseEl, 'play-circle');
         }
+    }
+
+    private togglePlayPause() {
+        this.setPlaying(!this.isPlaying);
+    }
+
+    private stop() {
+        this.setPlaying(false);
     }
 }

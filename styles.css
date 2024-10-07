@@ -14,6 +14,8 @@ If your plugin does not need CSS, delete this file.
     border-bottom: 1px solid var(--background-modifier-border);
     cursor: pointer;
     transition: background-color 0.2s ease;
+    position: relative;
+    padding-left: 10px; /* Make room for the status block */
 }
 
 .audio-segment:hover {
@@ -67,6 +69,27 @@ If your plugin does not need CSS, delete this file.
 
 .segment-status {
     margin-left: 8px;
+}
+
+.segment-status-block {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.segment-status-block.generated {
+    background-color: #4CAF50; /* Green for generated */
+}
+
+.segment-status-block.not_generated {
+    background-color: #F44336; /* Red for not generated */
+}
+
+.segment-status-block.generating {
+    background-color: #FFC107; /* Yellow for generating */
 }
 
 .chat4me-header {
