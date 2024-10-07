@@ -1,22 +1,22 @@
 import { Plugin, MarkdownView, Editor, Notice } from 'obsidian';
 import { Chat4MeSettings, DEFAULT_SETTINGS } from './settings';
 import { Chat4MeView, VIEW_TYPE_CHAT4ME } from './Chat4MeView';
-import { Chat4MeBackend, MockChat4MeBackend } from './Chat4MeBackend';
+import { AudioModel, MockAudioModel } from './AudioModel';
 import { Chat4MeSettingTab } from './SettingsTab';
 
 export default class Chat4MePlugin extends Plugin {
 	settings: Chat4MeSettings;
 	private chat4meView: Chat4MeView;
-	private backend: Chat4MeBackend;
+	private model: AudioModel;
 
 	async onload() {
 		await this.loadSettings();
-		this.backend = new MockChat4MeBackend();
+		this.model = new MockAudioModel();
 
 		// Register the custom view
 		this.registerView(
 			VIEW_TYPE_CHAT4ME,
-			(leaf) => (this.chat4meView = new Chat4MeView(leaf, this, this.backend))
+			(leaf) => (this.chat4meView = new Chat4MeView(leaf, this, this.model))
 		);
 
 		// Add ribbon icon
@@ -90,7 +90,7 @@ export default class Chat4MePlugin extends Plugin {
 		if (currentLine.startsWith('Host:') || currentLine.startsWith('Guest:')) {
 			const speaker = currentLine.startsWith('Host:') ? 'Host' : 'Guest';
 			const text = currentLine.substring(currentLine.indexOf(':') + 1).trim();
-			await this.backend.generateAudio(text, speaker);
+			await this.model.generateAudio(text, speaker);
 			new Notice(`Audio generated for: ${text}`);
 		} else {
 			new Notice('Current line is not a valid dialogue line');
@@ -102,8 +102,8 @@ export default class Chat4MePlugin extends Plugin {
 		if (currentLine.startsWith('Host:') || currentLine.startsWith('Guest:')) {
 			const speaker = currentLine.startsWith('Host:') ? 'Host' : 'Guest';
 			const text = currentLine.substring(currentLine.indexOf(':') + 1).trim();
-			const audioId = await this.backend.generateAudio(text, speaker);
-			await this.backend.playAudio(audioId);
+			const audioId = await this.model.generateAudio(text, speaker);
+			await this.model.playAudio(audioId);
 			new Notice(`Playing audio for: ${text}`);
 		} else {
 			new Notice('Current line is not a valid dialogue line');

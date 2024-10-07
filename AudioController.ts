@@ -1,4 +1,4 @@
-import { Chat4MeBackend } from './Chat4MeBackend';
+import { AudioModel } from './AudioModel';
 import { SegmentBlock } from './SegmentBlock';
 import { EventEmitter } from 'events';
 
@@ -7,7 +7,7 @@ export class AudioController extends EventEmitter {
     private currentPlayingSegment: number = -1;
     private segments: SegmentBlock[] = [];
 
-    constructor(private backend: Chat4MeBackend) {
+    constructor(private model: AudioModel) {
         super();
     }
 
@@ -28,7 +28,7 @@ export class AudioController extends EventEmitter {
 
     async playPauseSegment(lineNumber: number, text: string, speaker: 'Host' | 'Guest') {
         const audioId = `${speaker}_${lineNumber}`;
-        const status = await this.backend.getAudioStatus(audioId);
+        const status = await this.model.getAudioStatus(audioId);
         
         if (status === 'not_generated') {
             await this.generateSegment(lineNumber, text, speaker);
@@ -38,7 +38,7 @@ export class AudioController extends EventEmitter {
             if (this.isPlaying && this.currentPlayingSegment === lineNumber) {
                 await this.pauseFullAudio();
             } else {
-                await this.backend.playAudio(audioId);
+                await this.model.playAudio(audioId);
                 this.currentPlayingSegment = lineNumber;
                 this.isPlaying = true;
                 this.emit('stateChange', this.isPlaying);
@@ -49,7 +49,7 @@ export class AudioController extends EventEmitter {
 
     async stopSegment(lineNumber: number) {
         const audioId = `Host_${lineNumber}`; // This is a simplification. You might need to check both Host and Guest.
-        await this.backend.stopAudio(audioId);
+        await this.model.stopAudio(audioId);
         this.isPlaying = false;
         this.currentPlayingSegment = -1;
         this.emit('stateChange', this.isPlaying);
@@ -57,7 +57,7 @@ export class AudioController extends EventEmitter {
 
     async generateSegment(lineNumber: number, text: string, speaker: 'Host' | 'Guest') {
         try {
-            const audioId = await this.backend.generateAudio(text, speaker);
+            const audioId = await this.model.generateAudio(text, speaker);
             this.emit('segmentGenerated', lineNumber, 'generated');
             return audioId;
         } catch (error) {
@@ -73,7 +73,7 @@ export class AudioController extends EventEmitter {
 
             const segment = this.segments[i];
             const audioId = `${segment.speaker}_${segment.lineNumber}`;
-            const status = await this.backend.getAudioStatus(audioId);
+            const status = await this.model.getAudioStatus(audioId);
 
             if (status === 'not_generated') {
                 await this.generateSegment(segment.lineNumber, segment.text, segment.speaker);
@@ -82,21 +82,21 @@ export class AudioController extends EventEmitter {
             if (status === 'generated') {
                 this.currentPlayingSegment = i;
                 this.emit('segmentPlay', segment.lineNumber);
-                await this.backend.playAudio(audioId);
+                await this.model.playAudio(audioId);
             }
         }
 
         this.isPlaying = false;
         this.currentPlayingSegment = -1;
         this.emit('stateChange', this.isPlaying);
-        this.emit('playbackEnd');
+        this.emit('playmodel');
     }
 
     private async pauseFullAudio() {
         if (this.currentPlayingSegment >= 0) {
             const segment = this.segments[this.currentPlayingSegment];
             const audioId = `${segment.speaker}_${segment.lineNumber}`;
-            await this.backend.pauseAudio(audioId);
+            await this.model.pauseAudio(audioId);
         }
         this.isPlaying = false;
         this.emit('stateChange', this.isPlaying);

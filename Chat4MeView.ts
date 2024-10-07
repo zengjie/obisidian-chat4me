@@ -1,5 +1,5 @@
 import { ItemView, WorkspaceLeaf, TFile, MarkdownView, Editor, ButtonComponent, setIcon, Notice, EditorPosition, Plugin, Setting, DropdownComponent } from 'obsidian';
-import { Chat4MeBackend } from './Chat4MeBackend';
+import { AudioModel } from './AudioModel';
 import { debounce } from 'obsidian';
 import { SegmentBlock } from './SegmentBlock';
 import { AudioController } from './AudioController';
@@ -13,18 +13,18 @@ export class Chat4MeView extends ItemView {
     private cursorActivityHandler: () => void;
     private cursorCheckInterval: number | null = null;
     private lastKnownLine: number = -1;
-    private backend: Chat4MeBackend;
+    private model: AudioModel;
     private audioController: AudioController;
     private playPauseButton: ButtonComponent;
     private plugin: Plugin;
     private hostVoiceDropdown: DropdownComponent;
     private guestVoiceDropdown: DropdownComponent;
 
-    constructor(leaf: WorkspaceLeaf, plugin: Plugin, backend: Chat4MeBackend) {
+    constructor(leaf: WorkspaceLeaf, plugin: Plugin, model: AudioModel) {
         super(leaf);
         this.plugin = plugin;
-        this.backend = backend;
-        this.audioController = new AudioController(backend);
+        this.model = model;
+        this.audioController = new AudioController(model);
     }
 
     getViewType() {
@@ -83,7 +83,7 @@ export class Chat4MeView extends ItemView {
                 this.hostVoiceDropdown = dropdown;
                 this.populateVoiceDropdown(dropdown, 'host');
                 dropdown.onChange(async (value) => {
-                    await this.backend.setHostVoice(value);
+                    await this.model.setHostVoice(value);
                     new Notice("Host voice updated");
                 });
             });
@@ -96,7 +96,7 @@ export class Chat4MeView extends ItemView {
                 this.guestVoiceDropdown = dropdown;
                 this.populateVoiceDropdown(dropdown, 'guest');
                 dropdown.onChange(async (value) => {
-                    await this.backend.setGuestVoice(value);
+                    await this.model.setGuestVoice(value);
                     new Notice("Guest voice updated");
                 });
             });
@@ -113,18 +113,18 @@ export class Chat4MeView extends ItemView {
 
         // Set the current value
         const currentVoice = role === 'host' 
-            ? await this.backend.getHostVoice() 
-            : await this.backend.getGuestVoice();
+            ? await this.model.getHostVoice() 
+            : await this.model.getGuestVoice();
         dropdown.setValue(currentVoice);
     }
 
     private async updateVoiceSettings() {
         if (this.hostVoiceDropdown) {
-            const hostVoice = await this.backend.getHostVoice();
+            const hostVoice = await this.model.getHostVoice();
             this.hostVoiceDropdown.setValue(hostVoice);
         }
         if (this.guestVoiceDropdown) {
-            const guestVoice = await this.backend.getGuestVoice();
+            const guestVoice = await this.model.getGuestVoice();
             this.guestVoiceDropdown.setValue(guestVoice);
         }
     }
@@ -175,7 +175,7 @@ export class Chat4MeView extends ItemView {
             this.highlightPlayingSegment(lineNumber);
         });
 
-        this.audioController.on('playbackEnd', () => {
+        this.audioController.on('playmodel', () => {
             this.resetPlayingSegmentHighlight();
             new Notice('Finished playing all segments');
         });

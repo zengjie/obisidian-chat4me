@@ -1,6 +1,6 @@
 import { Chat4MeSettings, DEFAULT_SETTINGS } from './settings';
 
-export interface Chat4MeBackend {
+export interface AudioModel {
     generateAudio(text: string, speaker: 'Host' | 'Guest'): Promise<string>;
     playAudio(audioId: string): Promise<void>;
     pauseAudio(audioId: string): Promise<void>;
@@ -12,7 +12,7 @@ export interface Chat4MeBackend {
     getGuestVoice(): Promise<string>;
 }
 
-export class MockChat4MeBackend implements Chat4MeBackend {
+export class MockAudioModel implements AudioModel {
     private audioStore: Map<string, {status: 'generated' | 'not_generated' | 'generating', isPlaying: boolean}> = new Map();
     private settings: Chat4MeSettings = DEFAULT_SETTINGS;
 
