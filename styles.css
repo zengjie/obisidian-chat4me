@@ -100,3 +100,92 @@ If your plugin does not need CSS, delete this file.
     background-color: var(--interactive-accent);
     color: var(--text-on-accent);
 }
+
+.audio-segment.playing-segment {
+    background-color: rgba(0, 255, 0, 0.1);
+    border-left: 3px solid green;
+}
+
+.audio-controls-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.audio-control-button {
+    background-color: var(--interactive-accent);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 120px;
+    text-align: center;
+}
+
+.audio-control-button:hover {
+    color: var(--text-on-accent);
+    background-color: var(--interactive-accent-hover);
+}
+
+.audio-control-button:active {
+    background-color: var(--interactive-accent-active);
+}
+
+.dropdown-icon {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.audio-segment .segment-icon {
+    margin-right: 8px;
+}
+
+.setting-item-control .dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.setting-item-control .dropdown .dropdown-icon {
+    margin-right: 8px;
+}
+
+.setting-item-control .dropdown select {
+    padding-left: 28px; /* Adjust this value as needed */
+}
+
+.setting-item-heading {
+    display: flex;
+    align-items: center;
+}
+
+.heading-icon {
+    margin-right: 8px;
+}
+
+.setting-item-name {
+    margin-left: 4px;
+}
+
+.chat4me-voice-settings {
+    margin-bottom: 20px;
+}
+
+.chat4me-voice-settings summary {
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.chat4me-voice-settings summary::-webkit-details-marker {
+    display: none;
+}
+
+.chat4me-voice-settings[open] summary .lucide-chevron-down {
+    transform: rotate(180deg);
+}
