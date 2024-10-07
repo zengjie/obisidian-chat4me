@@ -1,13 +1,20 @@
+import { Chat4MeSettings, DEFAULT_SETTINGS } from './settings';
+
 export interface Chat4MeBackend {
     generateAudio(text: string, speaker: 'Host' | 'Guest'): Promise<string>;
     playAudio(audioId: string): Promise<void>;
     pauseAudio(audioId: string): Promise<void>;
     stopAudio(audioId: string): Promise<void>;
     getAudioStatus(audioId: string): Promise<'generated' | 'not_generated' | 'generating'>;
+    setHostVoice(voiceId: string): Promise<void>;
+    setGuestVoice(voiceId: string): Promise<void>;
+    getHostVoice(): Promise<string>;
+    getGuestVoice(): Promise<string>;
 }
 
 export class MockChat4MeBackend implements Chat4MeBackend {
     private audioStore: Map<string, {status: 'generated' | 'not_generated' | 'generating', isPlaying: boolean}> = new Map();
+    private settings: Chat4MeSettings = DEFAULT_SETTINGS;
 
     async generateAudio(text: string, speaker: 'Host' | 'Guest'): Promise<string> {
         const audioId = `${speaker}_${Date.now()}`;
@@ -50,5 +57,25 @@ export class MockChat4MeBackend implements Chat4MeBackend {
     async getAudioStatus(audioId: string): Promise<'generated' | 'not_generated' | 'generating'> {
         const audio = this.audioStore.get(audioId);
         return audio ? audio.status : 'not_generated';
+    }
+
+    async setHostVoice(voiceId: string): Promise<void> {
+        this.settings.hostVoice = voiceId;
+        // In a real implementation, you would save this to persistent storage
+        console.log(`Host voice set to: ${voiceId}`);
+    }
+
+    async setGuestVoice(voiceId: string): Promise<void> {
+        this.settings.guestVoice = voiceId;
+        // In a real implementation, you would save this to persistent storage
+        console.log(`Guest voice set to: ${voiceId}`);
+    }
+
+    async getHostVoice(): Promise<string> {
+        return this.settings.hostVoice;
+    }
+
+    async getGuestVoice(): Promise<string> {
+        return this.settings.guestVoice;
     }
 }

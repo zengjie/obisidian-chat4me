@@ -189,3 +189,9 @@ If your plugin does not need CSS, delete this file.
 .chat4me-voice-settings[open] summary .lucide-chevron-down {
     transform: rotate(180deg);
 }
+
+.chat4me-separator {
+    border: none;
+    border-top: 1px solid var(--background-modifier-border);
+    margin: 10px 0;
+}
