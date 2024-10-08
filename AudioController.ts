@@ -6,8 +6,8 @@ export class AudioController extends EventEmitter {
     private isPlaying: boolean = false;
     private currentPlayingSegment: number = -1;
     private segments: SegmentBlock[] = [];
-    private audioIdMap: Map<string, number> = new Map();
 
+    
     constructor(private model: AudioModel) {
         super();
     }
@@ -21,7 +21,6 @@ export class AudioController extends EventEmitter {
         for (const segment of this.segments) {
             const audioId = segment.audioId;
             if (audioId) {
-                this.audioIdMap.set(audioId, segment.lineNumber);
                 const status = this.model.getAudioStatus(audioId);
                 segment.updateStatus(status);
             } else {
@@ -45,7 +44,6 @@ export class AudioController extends EventEmitter {
         console.log('playPauseSegment', lineNumber, text, speaker);
         const audioId = await this.model.generateAudio(text, speaker);
         
-        this.audioIdMap.set(audioId, lineNumber);
         const status = this.model.getAudioStatus(audioId);
         this.updateSegmentStatus(audioId, status);
 
@@ -90,7 +88,6 @@ export class AudioController extends EventEmitter {
             console.log('generateSegmentAudio', audioId, text, speaker);
             
             await this.model.generateAudio(text, speaker);
-            this.audioIdMap.set(audioId, lineNumber);
             
             const status = this.model.getAudioStatus(audioId);
             this.updateSegmentStatus(audioId, status);
@@ -117,7 +114,6 @@ export class AudioController extends EventEmitter {
             const segment = this.segments[i];
             const audioId = this.model.getAudioId(segment.text, segment.speaker);
             const finalAudioId = audioId || await this.model.generateAudio(segment.text, segment.speaker);
-            this.audioIdMap.set(finalAudioId, segment.lineNumber);
             const status = this.model.getAudioStatus(finalAudioId);
             this.updateSegmentStatus(finalAudioId, status);
 
@@ -150,11 +146,11 @@ export class AudioController extends EventEmitter {
     }
 
     async generateFullAudio() {
+        console.log('generateFullAudio');
         const audioGenerationPromises = this.segments.map(async segment => {
             const audioId = this.model.getAudioId(segment.text, segment.speaker);
             if (audioId) {
                 // Audio already exists, just update the status
-                this.audioIdMap.set(audioId, segment.lineNumber);
                 const status = this.model.getAudioStatus(audioId);
                 this.updateSegmentStatus(audioId, status);
                 return;
